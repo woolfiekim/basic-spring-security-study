@@ -1,2 +1,6 @@
-spring
+spring:
+  security:
+    user:
+      name: user
+      password: 1111
 
