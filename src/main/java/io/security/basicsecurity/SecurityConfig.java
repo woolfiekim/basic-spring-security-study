@@ -1,25 +1,13 @@
 package io.security.basicsecurity;
 
-import java.io.IOException;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.NoArgsConstructor;
 
 @Configuration
@@ -34,46 +22,29 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                 auth
+                    .requestMatchers("/user").hasRole("USER")
+                    .requestMatchers("/admin/pay").hasRole("ADMIN")
+                    // .requestMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
                     .requestMatchers("/login").permitAll()
                     .anyRequest().authenticated()
             );
 
+
         http
             .formLogin();
 
-        // http
-        //     .logout(form ->
-        //         form
-        //             .logoutUrl("/logout")
-        //             .logoutSuccessUrl("/login?logout")
-        //             .addLogoutHandler((request, response, authentication) -> {
-        //                 HttpSession session = request.getSession();
-        //                 session.invalidate();
-        //             })
-        //             .logoutSuccessHandler((request, response, authentication) -> response.sendRedirect("/login"))
-        //             .deleteCookies("remember-me")
-        //     );
-
-        // http
-        //     .rememberMe(form ->
-        //         form
-        //             .userDetailsService(userDetailsService)
-        //     );
-
-        http
-            .sessionManagement(form ->
-                form
-                    .maximumSessions(1)
-                    .maxSessionsPreventsLogin(true)
-            );
-
-        // http
-        //     .sessionManagement(form ->
-        //         form
-        //             .sessionFixation()
-        //             .changeSessionId()
-        //     );
-
         return http.build();
     }
+
+
+    @Bean
+    public void configure(AuthenticationManagerBuilder auth) throws Exception{
+        auth.inMemoryAuthentication().withUser("user").password("{noop}1111").roles("USER");
+        auth.inMemoryAuthentication().withUser("sys").password("{noop}1111").roles("SYS", "USER");
+        auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN", "SYS", "USER");
+        //{noop} : 어떠한 암호화를 했는 지 알려주는 것을 prefix로 붙여주는 것이다.
+    }
+
+
+
 }
