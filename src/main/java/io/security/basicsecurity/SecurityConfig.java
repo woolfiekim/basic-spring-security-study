@@ -7,6 +7,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import lombok.NoArgsConstructor;
 
@@ -22,6 +25,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                 auth
+                    .requestMatchers("/login").permitAll() 
                     .requestMatchers("/user").hasRole("USER")
                     .requestMatchers("/admin/pay").hasRole("ADMIN")
                     // .requestMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
@@ -29,9 +33,26 @@ public class SecurityConfig {
                     .anyRequest().authenticated()
             );
 
+        http
+            .exceptionHandling(auth ->
+                auth
+                    .authenticationEntryPoint((request, response, authException) -> {
+                        response.sendRedirect("/login ");
+                    })
+                    .accessDeniedHandler((request, response, accessDeniedException) -> {
+                        response.sendRedirect("/denied" );
+                    })
+            );
+
 
         http
-            .formLogin();
+            .formLogin()
+            .successHandler((request, response, authentication) -> {
+                RequestCache requestCache = new HttpSessionRequestCache();
+                SavedRequest savedRequest = requestCache.getRequest(request, response);
+                String redirectUrl = savedRequest.getRedirectUrl(); //사용자가 원래 가고 싶었던 페이지 경로
+                response.sendRedirect(redirectUrl); //인증에 성공하고 나서 바로 그 이전의 정보를 가져와서 바로 이동하도록 처리
+            });
 
         return http.build();
     }
