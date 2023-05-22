@@ -25,12 +25,16 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                 auth
-                    .requestMatchers("/login").permitAll() 
-                    .requestMatchers("/user").hasRole("USER")
-                    .requestMatchers("/admin/pay").hasRole("ADMIN")
-                    // .requestMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")
-                    .requestMatchers("/login").permitAll()
-                    .anyRequest().authenticated()
+                    .requestMatchers("/").authenticated() //인증된 사용자의 접근을 허용
+                    .requestMatchers("/").fullyAuthenticated() //인증된 사용자(ID, PWD로 로그인한 유저)의 접근을 허용, rememberMe 인증 제외
+                    .requestMatchers("/").permitAll() //무조건 접근을 허용
+                    .requestMatchers("/").denyAll() //무조건 접근을 허용하지 않음
+                    .requestMatchers("/").anonymous() //익명사용자("ROLE_Anonymous" 권한을 가진 사용자만)의 접근을 허용
+                    .requestMatchers("/").rememberMe() //리멤버미를 통해 인증된 사용자의 접근을 허용
+                    .requestMatchers("/").hasRole("USER") //사용자가 주어진 역할이 있다면 접근을 허용 (prefix인 "ROLE_" 이 붙지않은)
+                    .requestMatchers("/").hasAuthority("ROLE_USER") //사용자가 주어진 권한이 있다면(prefix인 "ROLE_" 이 붙은)
+                    .requestMatchers("/").hasAnyRole("ADMIN", "SYS") //사용자가 주어진 권한이 있다면 접근을 허용(권한 여러 개 가능)
+                    .requestMatchers("/").hasAnyAuthority("ROLE_ADMIN", "ROLE_SYS") //사용자가 주어진 권한이 있다면 접근을 허용(권한 여러 개 가능)
             );
 
         http
@@ -65,6 +69,8 @@ public class SecurityConfig {
         auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN", "SYS", "USER");
         //{noop} : 어떠한 암호화를 했는 지 알려주는 것을 prefix로 붙여주는 것이다.
     }
+
+
 
 
 
